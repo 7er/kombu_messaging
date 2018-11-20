@@ -37,7 +37,7 @@ class Server(ConsumerProducerMixin):
 
 # connections
 
-conn = Connection('amqp://guest:guest@localhost//', heartbeat=10)
+conn = Connection('amqp://guest:guest@localhost//')
 conn.connect()
 
 server = Server(conn)
