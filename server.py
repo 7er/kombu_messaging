@@ -1,10 +1,8 @@
 import socket
 
-from kombu import Exchange, Queue, Connection, Consumer, Producer
+from kombu import Connection, Consumer, Producer
 
-
-rpc_exchange = Exchange('rpc', 'direct', durable=True)
-command_queue = Queue('command', exchange=rpc_exchange, routing_key='command')
+import rpc_channel
 
 
 class Server:
@@ -32,7 +30,7 @@ class Server:
     def run(self):
         with Consumer(
                 self.connection,
-                queues=[command_queue],
+                queues=[rpc_channel.command_queue],
                 on_message=self.on_request,
                 accept={'application/json'},
                 prefetch_count=1):
@@ -43,7 +41,7 @@ class Server:
                     self.connection.heartbeat_check()
 
 
-conn = Connection('amqp://guest:guest@localhost//', heartbeat=10)
+conn = Connection('amqp://guest:guest@localhost//', heartbeat=60)
 conn.connect()
 
 server = Server(conn, Producer(conn))
