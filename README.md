@@ -29,3 +29,5 @@ Example:
 Publish the document to the sum_batches queue in rabbit. 
 Suggestion: Use the rabbitmq management UI at http://localhost:15672
 
+Check the result by examining the sum_results queue
+
