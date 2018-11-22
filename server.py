@@ -1,21 +1,16 @@
-from kombu import Exchange, Queue, Connection
-from kombu.mixins import ConsumerProducerMixin
+import socket
+
+from kombu import Exchange, Queue, Connection, Consumer, Producer
+
 
 rpc_exchange = Exchange('rpc', 'direct', durable=True)
 command_queue = Queue('command', exchange=rpc_exchange, routing_key='command')
 
 
-class Server(ConsumerProducerMixin):
-    def __init__(self, connection):
+class Server:
+    def __init__(self, connection, producer):
         self.connection = connection
-
-    def get_consumers(self, Consumer, channel):
-        return [Consumer(
-            queues=[command_queue],
-            on_message=self.on_request,
-            accept={'application/json'},
-            prefetch_count=1,
-        )]
+        self.producer = producer
 
     def on_request(self, message):
         print(message.properties)
@@ -34,11 +29,22 @@ class Server(ConsumerProducerMixin):
         else:
             raise RuntimeError('invalid message: %r' % message.decode())
 
+    def run(self):
+        with Consumer(
+                self.connection,
+                queues=[command_queue],
+                on_message=self.on_request,
+                accept={'application/json'},
+                prefetch_count=1):
+            while True:
+                try:
+                    self.connection.drain_events(timeout=2)
+                except socket.timeout:
+                    self.connection.heartbeat_check()
 
-# connections
 
-conn = Connection('amqp://guest:guest@localhost//')
+conn = Connection('amqp://guest:guest@localhost//', heartbeat=10)
 conn.connect()
 
-server = Server(conn)
+server = Server(conn, Producer(conn))
 server.run()
