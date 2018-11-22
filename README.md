@@ -1,4 +1,4 @@
-Messgin example with a document channel and an rpc channel
+Messaging example with a document channel and an rpc channel
 ==================================================
 
 Rabbitmq server
